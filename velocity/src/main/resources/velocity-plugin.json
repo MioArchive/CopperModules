@@ -1,0 +1,10 @@
+{
+  "id": "coppermodule",
+  "name": "CopperModule",
+  "version": "${version}",
+  "description": "${description}",
+  "authors": [
+    "JavaMio"
+  ],
+  "main": "net.javamio.coppermodule.velocity.CopperVelocity"
+}
