@@ -1,28 +1,31 @@
 package net.javamio.coppermodule.common.module;
 
 import net.javamio.coppermodule.common.module.exception.ModuleException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ModuleManager {
 
-    private final Map<String, Module> modules;
+    private final @NotNull Map<String, Module> modules;
 
     public ModuleManager() {
         this.modules = new ConcurrentHashMap<>();
     }
 
-    public void registerModule(final Module module) throws ModuleException {
-        if (this.modules.containsKey(module.getIdentifier())) {
-            throw new ModuleException("Module with identifier '" + module.getIdentifier() + "' is already registered");
+    public void registerModule(@NotNull final Module module) throws ModuleException {
+        final @NotNull String identifier = module.getIdentifier();
+
+        if (this.modules.containsKey(identifier)) {
+            throw new ModuleException("Module with identifier '" + identifier + "' is already registered");
         }
 
-        this.modules.put(module.getIdentifier(), module);
+        this.modules.put(identifier, module);
     }
 
-    public void unregisterModule(final String identifier) throws ModuleException {
-        final Module module = this.modules.get(identifier);
+    public void unregisterModule(@NotNull final String identifier) throws ModuleException {
+        final @NotNull Module module = this.modules.get(identifier);
         if (module == null) {
             throw new ModuleException("Module with identifier '" + identifier + "' is not registered");
         }
@@ -34,23 +37,23 @@ public class ModuleManager {
         this.modules.remove(identifier);
     }
 
-    public Optional<Module> getModule(final String identifier) {
+    public @NotNull Optional<@NotNull Module> getModule(@NotNull final String identifier) {
         return Optional.ofNullable(this.modules.get(identifier));
     }
 
-    public Collection<Module> getModules() {
+    public @NotNull Collection<@NotNull Module> getModules() {
         return Collections.unmodifiableCollection(this.modules.values());
     }
 
-    public void loadModule(final String identifier) throws ModuleException {
-        final Module module = this.getModuleOrThrow(identifier);
+    public void loadModule(@NotNull final String identifier) throws ModuleException {
+        final @NotNull Module module = this.getModuleOrThrow(identifier);
 
         if (module.getState() != ModuleState.UNLOADED) {
             throw new ModuleException("Module '" + identifier + "' is already loaded");
         }
 
-        for (final String dependency : module.getDependencies()) {
-            final Module dependencyModule = this.getModuleOrThrow(dependency);
+        for (final @NotNull String dependency : module.getDependencies()) {
+            final @NotNull Module dependencyModule = this.getModuleOrThrow(dependency);
             if (dependencyModule.getState() == ModuleState.UNLOADED) {
                 this.loadModule(dependency);
             }
@@ -65,8 +68,8 @@ public class ModuleManager {
         }
     }
 
-    public void enableModule(final String identifier) throws ModuleException {
-        final Module module = this.getModuleOrThrow(identifier);
+    public void enableModule(@NotNull final String identifier) throws ModuleException {
+        final @NotNull Module module = this.getModuleOrThrow(identifier);
 
         if (module.getState() == ModuleState.ENABLED) {
             throw new ModuleException("Module '" + identifier + "' is already enabled");
@@ -76,8 +79,8 @@ public class ModuleManager {
             this.loadModule(identifier);
         }
 
-        for (final String dependency : module.getDependencies()) {
-            final Module dependencyModule = this.getModuleOrThrow(dependency);
+        for (final @NotNull String dependency : module.getDependencies()) {
+            final @NotNull Module dependencyModule = this.getModuleOrThrow(dependency);
             if (dependencyModule.getState() != ModuleState.ENABLED) {
                 throw new ModuleException("Cannot enable module '" + identifier + "' because dependency '" + dependency + "' is not enabled");
             }
@@ -87,7 +90,7 @@ public class ModuleManager {
             module.onEnable();
             module.setState(ModuleState.ENABLED);
 
-            for (final SubModule subModule : module.getSubModules()) {
+            for (final @NotNull SubModule subModule : module.getSubModules()) {
                 this.enableModule(subModule.getIdentifier());
             }
         } catch (final Exception exception) {
@@ -96,23 +99,23 @@ public class ModuleManager {
         }
     }
 
-    public void disableModule(final String identifier) throws ModuleException {
-        final Module module = this.getModuleOrThrow(identifier);
+    public void disableModule(@NotNull final String identifier) throws ModuleException {
+        final @NotNull Module module = this.getModuleOrThrow(identifier);
 
         if (module.getState() != ModuleState.ENABLED) {
             throw new ModuleException("Module '" + identifier + "' is not enabled");
         }
 
-        final List<Module> dependentModules = this.modules.values().stream()
+        final @NotNull List<@NotNull Module> dependentModules = this.modules.values().stream()
                 .filter(m -> m.getDependencies().contains(identifier))
                 .filter(m -> m.getState() == ModuleState.ENABLED)
                 .toList();
 
-        for (final Module dependent : dependentModules) {
+        for (final @NotNull Module dependent : dependentModules) {
             this.disableModule(dependent.getIdentifier());
         }
 
-        for (final SubModule subModule : module.getSubModules()) {
+        for (final @NotNull SubModule subModule : module.getSubModules()) {
             if (subModule.getState() == ModuleState.ENABLED) {
                 this.disableModule(subModule.getIdentifier());
             }
@@ -127,8 +130,8 @@ public class ModuleManager {
         }
     }
 
-    public void unloadModule(final String identifier) throws ModuleException {
-        final Module module = this.getModuleOrThrow(identifier);
+    public void unloadModule(@NotNull final String identifier) throws ModuleException {
+        final @NotNull Module module = this.getModuleOrThrow(identifier);
 
         if (module.getState() == ModuleState.ENABLED) {
             this.disableModule(identifier);
@@ -147,9 +150,9 @@ public class ModuleManager {
         }
     }
 
-    public void reloadModule(final String identifier) throws ModuleException {
-        final Module module = this.getModuleOrThrow(identifier);
-        final ModuleState previousState = module.getState();
+    public void reloadModule(@NotNull final String identifier) throws ModuleException {
+        final @NotNull Module module = this.getModuleOrThrow(identifier);
+        final @NotNull ModuleState previousState = module.getState();
 
         if (previousState == ModuleState.ENABLED) {
             this.disableModule(identifier);
@@ -166,8 +169,7 @@ public class ModuleManager {
         }
     }
 
-    private Module getModuleOrThrow(final String identifier) throws ModuleException {
-        return this.getModule(identifier)
-                .orElseThrow(() -> new ModuleException("Module with identifier '" + identifier + "' is not registered"));
+    private @NotNull Module getModuleOrThrow(@NotNull final String identifier) throws ModuleException {
+        return this.getModule(identifier).orElseThrow(() -> new ModuleException("Module with identifier '" + identifier + "' is not registered"));
     }
 }

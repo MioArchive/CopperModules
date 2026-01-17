@@ -1,20 +1,21 @@
 package net.javamio.coppermodule.common.module;
 
 import net.javamio.coppermodule.common.module.exception.ModuleException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
 public interface Module {
 
-    String getIdentifier();
+    @NotNull String getIdentifier();
 
-    String getDisplayName(); // - TODO
+    @NotNull String getDisplayName(); // TODO
 
-    ModuleState getState();
+    @NotNull ModuleState getState();
 
-    Set<String> getDependencies();
+    @NotNull Set<@NotNull String> getDependencies();
 
-    Set<SubModule> getSubModules();
+    @NotNull Set<@NotNull SubModule> getSubModules();
 
     void onLoad() throws ModuleException;
 
@@ -24,5 +25,5 @@ public interface Module {
 
     void onUnload() throws ModuleException;
 
-    void setState(ModuleState state);
+    void setState(@NotNull ModuleState state);
 }
