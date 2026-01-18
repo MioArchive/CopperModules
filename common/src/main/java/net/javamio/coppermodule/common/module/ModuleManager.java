@@ -1,27 +1,40 @@
 package net.javamio.coppermodule.common.module;
 
+import lombok.Getter;
 import net.javamio.coppermodule.common.module.exception.ModuleException;
+import net.javamio.coppermodule.common.module.storage.ModuleStorage;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Getter
 public class ModuleManager {
 
     private final @NotNull Map<String, Module> modules;
 
-    public ModuleManager() {
+    @Getter
+    private final @Nullable ModuleStorage storage;
+
+    private final boolean persistStates;
+
+    public ModuleManager(final @Nullable ModuleStorage storage, final boolean persistStates) {
         this.modules = new ConcurrentHashMap<>();
+        this.storage = storage;
+        this.persistStates = persistStates;
+    }
+
+    public ModuleManager() {
+        this(null, false);
     }
 
     public void registerModule(@NotNull final Module module) throws ModuleException {
-        final @NotNull String identifier = module.getIdentifier();
-
-        if (this.modules.containsKey(identifier)) {
-            throw new ModuleException("Module with identifier '" + identifier + "' is already registered");
+        if (this.modules.containsKey(module.getIdentifier())) {
+            throw new ModuleException("Module with identifier '" + module.getIdentifier() + "' is already registered");
         }
 
-        this.modules.put(identifier, module);
+        this.modules.put(module.getIdentifier(), module);
     }
 
     public void unregisterModule(@NotNull final String identifier) throws ModuleException {
@@ -35,6 +48,10 @@ public class ModuleManager {
         }
 
         this.modules.remove(identifier);
+
+        if (this.persistStates && this.storage != null) {
+            this.storage.deleteModuleState(identifier);
+        }
     }
 
     public @NotNull Optional<@NotNull Module> getModule(@NotNull final String identifier) {
@@ -62,8 +79,10 @@ public class ModuleManager {
         try {
             module.onLoad();
             module.setState(ModuleState.LOADED);
+            this.saveState(module);
         } catch (final Exception exception) {
             module.setState(ModuleState.ERROR);
+            this.saveState(module);
             throw new ModuleException("Failed to load module '" + identifier + "'", exception);
         }
     }
@@ -89,12 +108,14 @@ public class ModuleManager {
         try {
             module.onEnable();
             module.setState(ModuleState.ENABLED);
+            this.saveState(module);
 
             for (final @NotNull SubModule subModule : module.getSubModules()) {
                 this.enableModule(subModule.getIdentifier());
             }
         } catch (final Exception exception) {
             module.setState(ModuleState.ERROR);
+            this.saveState(module);
             throw new ModuleException("Failed to enable module '" + identifier + "'", exception);
         }
     }
@@ -111,6 +132,7 @@ public class ModuleManager {
                 .filter(m -> m.getState() == ModuleState.ENABLED)
                 .toList();
 
+
         for (final @NotNull Module dependent : dependentModules) {
             this.disableModule(dependent.getIdentifier());
         }
@@ -124,8 +146,10 @@ public class ModuleManager {
         try {
             module.onDisable();
             module.setState(ModuleState.DISABLED);
+            this.saveState(module);
         } catch (final Exception exception) {
             module.setState(ModuleState.ERROR);
+            this.saveState(module);
             throw new ModuleException("Failed to disable module '" + identifier + "'", exception);
         }
     }
@@ -144,15 +168,17 @@ public class ModuleManager {
         try {
             module.onUnload();
             module.setState(ModuleState.UNLOADED);
+            this.saveState(module);
         } catch (final Exception exception) {
             module.setState(ModuleState.ERROR);
+            this.saveState(module);
             throw new ModuleException("Failed to unload module '" + identifier + "'", exception);
         }
     }
 
-    public void reloadModule(@NotNull final String identifier) throws ModuleException {
+    public void reloadModule(final @NotNull String identifier) throws ModuleException {
         final @NotNull Module module = this.getModuleOrThrow(identifier);
-        final @NotNull ModuleState previousState = module.getState();
+        final ModuleState previousState = module.getState();
 
         if (previousState == ModuleState.ENABLED) {
             this.disableModule(identifier);
@@ -169,7 +195,59 @@ public class ModuleManager {
         }
     }
 
-    private @NotNull Module getModuleOrThrow(@NotNull final String identifier) throws ModuleException {
+    public void restoreStates() throws ModuleException {
+        if (!this.persistStates || this.storage == null) {
+            return;
+        }
+
+        if (!this.storage.isConnected()) {
+            throw new ModuleException("Storage is not connected");
+        }
+
+        final @NotNull Map<String, ModuleState> savedStates = this.storage.loadAllModuleStates();
+
+        for (final Map.Entry<String, ModuleState> entry : savedStates.entrySet()) {
+            final @NotNull String identifier = entry.getKey();
+            final @NotNull ModuleState savedState = entry.getValue();
+
+            if (!this.modules.containsKey(identifier)) {
+                continue;
+            }
+
+            if (savedState == ModuleState.LOADED || savedState == ModuleState.ENABLED) {
+                try {
+                    this.loadModule(identifier);
+                } catch (final ModuleException exception) {
+                    System.err.println("Failed to restore load state for module '" + identifier + "': " + exception.getMessage());
+                }
+            }
+        }
+
+        for (final Map.Entry<String, ModuleState> entry : savedStates.entrySet()) {
+            final String identifier = entry.getKey();
+            final ModuleState savedState = entry.getValue();
+
+            if (!this.modules.containsKey(identifier)) {
+                continue;
+            }
+
+            if (savedState == ModuleState.ENABLED) {
+                try {
+                    this.enableModule(identifier);
+                } catch (final ModuleException exception) {
+                    System.err.println("Failed to restore enable state for module '" + identifier + "': " + exception.getMessage());
+                }
+            }
+        }
+    }
+
+    private void saveState(final @NotNull Module module) {
+        if (this.persistStates && this.storage != null && this.storage.isConnected()) {
+            this.storage.saveModuleState(module.getIdentifier(), module.getState());
+        }
+    }
+
+    private @NotNull Module getModuleOrThrow(final @NotNull String identifier) throws ModuleException {
         return this.getModule(identifier).orElseThrow(() -> new ModuleException("Module with identifier '" + identifier + "' is not registered"));
     }
 }
