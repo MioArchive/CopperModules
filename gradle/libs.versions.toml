@@ -1,9 +1,9 @@
 [versions]
 paper = "1.21.4-R0.1-SNAPSHOT"
 velocity = "3.4.0-SNAPSHOT"
-run-paper = "2.3.1"
-lombok = "1.18.36"
-shadow = "8.3.5"
+run-paper = "3.0.2"
+lombok = "1.18.42"
+shadow = "9.2.2"
 
 [libraries]
 lombok = { group = "org.projectlombok", name = "lombok", version.ref = "lombok" }
