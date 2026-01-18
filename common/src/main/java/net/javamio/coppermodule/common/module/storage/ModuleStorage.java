@@ -1,8 +1,10 @@
-package net.javamio.coppermodule.common.module;
+package net.javamio.coppermodule.common.module.storage;
 
+import net.javamio.coppermodule.common.module.ModuleState;
 import net.javamio.coppermodule.common.module.exception.StorageException;
 import org.jetbrains.annotations.NotNull;
 
+import java.sql.SQLException;
 import java.util.Map;
 import java.util.Optional;
 
@@ -16,7 +18,7 @@ public interface ModuleStorage {
 
     void deleteModuleState(@NotNull String moduleIdentifier);
 
-    void initialize() throws StorageException;
+    void initialize() throws StorageException, SQLException;
 
     void close() throws StorageException;
 
