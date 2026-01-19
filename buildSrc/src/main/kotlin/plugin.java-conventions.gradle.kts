@@ -28,11 +28,13 @@ tasks {
 
     processResources {
         inputs.property("version", version)
-        inputs.property("description", description)
+        inputs.property("description", description ?: "")
         filesMatching(listOf("plugin.yml", "velocity-plugin.json")) {
             expand(
-                "version" to version,
-                "description" to description
+                mapOf(
+                    "version" to version,
+                    "description" to (description ?: "")
+                )
             )
         }
     }
