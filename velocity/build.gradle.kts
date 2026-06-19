@@ -35,7 +35,7 @@ tasks {
     }
 
     runVelocity {
-        velocityVersion("3.3.0-SNAPSHOT")
+        velocityVersion(libs.versions.velocity.get())
         runDirectory = layout.projectDirectory.dir("run/$version")
 
         javaLauncher = project.javaToolchains.launcherFor {
