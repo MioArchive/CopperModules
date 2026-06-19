@@ -3,7 +3,6 @@ package net.javamio.coppermodule.common.module;
 import lombok.Getter;
 import net.javamio.coppermodule.common.module.exception.ModuleException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashSet;
