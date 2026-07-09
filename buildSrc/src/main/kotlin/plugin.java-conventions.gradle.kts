@@ -22,6 +22,19 @@ java {
     withSourcesJar()
 }
 
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/MioArchive/CopperModules")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR") ?: providers.gradleProperty("gpr.user").orNull
+                password = System.getenv("GITHUB_TOKEN") ?: providers.gradleProperty("gpr.key").orNull
+            }
+        }
+    }
+}
+
 tasks {
     withType<JavaCompile> {
         options.encoding = Charsets.UTF_8.name()
