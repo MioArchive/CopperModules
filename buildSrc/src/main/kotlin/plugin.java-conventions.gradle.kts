@@ -1,5 +1,6 @@
 plugins {
     java
+    `maven-publish`
 }
 
 group = rootProject.group
@@ -18,6 +19,7 @@ dependencies {
 java {
     toolchain.languageVersion = JavaLanguageVersion.of(21)
     disableAutoTargetJvm()
+    withSourcesJar()
 }
 
 tasks {

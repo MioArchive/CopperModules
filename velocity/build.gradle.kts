@@ -18,6 +18,14 @@ dependencies {
     annotationProcessor(libs.lombok)
 }
 
+publishing {
+    publications {
+        create<MavenPublication>("shadow") {
+            from(components["shadow"])
+        }
+    }
+}
+
 tasks {
     register("generateTemplates")
 
