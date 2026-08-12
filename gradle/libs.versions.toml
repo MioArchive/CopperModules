@@ -1,7 +1,7 @@
 [versions]
 paper = "1.21.4-R0.1-SNAPSHOT"
 velocity = "3.4.0"
-run-paper = "3.0.2"
+run-paper = "3.1.0"
 lombok = "1.18.46"
 shadow = "9.6.1"
 
