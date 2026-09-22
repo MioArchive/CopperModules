@@ -1,5 +1,5 @@
 plugins {
-    java
+    `java-library`
     `maven-publish`
 }
 
@@ -22,14 +22,35 @@ java {
     withSourcesJar()
 }
 
+pluginManager.withPlugin("com.gradleup.shadow") {
+    (components["java"] as AdhocComponentWithVariants)
+        .withVariantsFromConfiguration(configurations["shadowRuntimeElements"]) { skip() }
+}
+
+if (System.getenv("JITPACK") == "true") {
+    tasks.withType<GenerateModuleMetadata>().configureEach { enabled = false }
+}
+
 publishing {
-    repositories {
-        maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/MioArchive/CopperModules")
-            credentials {
-                username = System.getenv("GITHUB_ACTOR") ?: providers.gradleProperty("gpr.user").orNull
-                password = System.getenv("GITHUB_TOKEN") ?: providers.gradleProperty("gpr.key").orNull
+    publications {
+        create<MavenPublication>("maven") {
+            from(components["java"])
+            artifactId = "coppermodule-${project.name}"
+
+            pom {
+                name = "CopperModule ${project.name.replaceFirstChar { it.uppercase() }}"
+                description = "Modular library for Minecraft plugins (${project.name})."
+                url = "https://github.com/MioArchive/CopperModules"
+                licenses {
+                    license {
+                        name = "GNU General Public License v3.0"
+                        url = "https://www.gnu.org/licenses/gpl-3.0.txt"
+                    }
+                }
+                scm {
+                    url = "https://github.com/MioArchive/CopperModules"
+                    connection = "scm:git:https://github.com/MioArchive/CopperModules.git"
+                }
             }
         }
     }

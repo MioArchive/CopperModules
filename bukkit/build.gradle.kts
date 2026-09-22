@@ -11,22 +11,16 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":common"))
+    api(project(":common"))
     compileOnly(libs.paper)
+    compileOnly(libs.lombok)
     annotationProcessor(libs.lombok)
-}
-
-publishing {
-    publications {
-        create<MavenPublication>("shadow") {
-            from(components["shadow"])
-        }
-    }
 }
 
 tasks {
     jar {
-        enabled = false
+        exclude("plugin.yml")
+        exclude("net/javamio/coppermodule/bukkit/CopperBukkit*.class")
     }
 
     shadowJar {

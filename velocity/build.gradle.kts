@@ -12,25 +12,19 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":common"))
+    api(project(":common"))
     compileOnly(libs.velocity)
     annotationProcessor(libs.velocity)
+    compileOnly(libs.lombok)
     annotationProcessor(libs.lombok)
-}
-
-publishing {
-    publications {
-        create<MavenPublication>("shadow") {
-            from(components["shadow"])
-        }
-    }
 }
 
 tasks {
     register("generateTemplates")
 
     jar {
-        enabled = false
+        exclude("velocity-plugin.json")
+        exclude("net/javamio/coppermodule/velocity/CopperVelocity*.class")
     }
 
     shadowJar {

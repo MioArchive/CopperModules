@@ -7,4 +7,5 @@ group = if (System.getenv("JITPACK") == "true" && !jitpackGroup.isNullOrBlank() 
     "net.javamio.coppermodule"
 }
 description = ""
-version = "1.0.0"
+version = System.getenv("VERSION").takeIf { System.getenv("JITPACK") == "true" && !it.isNullOrBlank() }
+    ?: "1.0.0-SNAPSHOT"
